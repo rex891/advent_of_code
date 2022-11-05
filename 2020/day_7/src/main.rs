@@ -43,6 +43,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("part 1: {num_bags}");
 
+    println!(
+        "part 2: {}",
+        get_bag_contents_count("shiny gold", &bag_rules),
+    );
+
     Ok(())
 }
 
@@ -63,5 +68,15 @@ fn holds(find_color: &str, curr_bag_color: &str, bag_rules: &BagRules) -> bool {
                 || y.any(|col| holds(find_color, col, bag_rules))
         }
         _ => false,
+    }
+}
+
+fn get_bag_contents_count(color: &str, bag_rules: &BagRules) -> u32 {
+    match &bag_rules[color] {
+        None => 1,
+        Some(portions) => portions.iter().fold(0, |acc, Portion { number, color }| {
+            println!("{acc}, {number}, {color}");
+            acc + 1 + number * get_bag_contents_count(color, bag_rules)
+        }),
     }
 }
