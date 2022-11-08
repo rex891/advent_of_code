@@ -20,7 +20,6 @@ fn main() {
         .len();
 
     println!("part 2: {count}");
-    // println!("part 1: {}", pair_of_double_letters_no_overlap(word));
 }
 
 fn contains_3_vowels(word: &str) -> bool {
