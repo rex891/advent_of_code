@@ -3,11 +3,11 @@ use std::{collections::HashMap, fs};
 fn main() {
     let input = fs::read_to_string("input.txt").unwrap();
 
-    let inputs = input
+    let inputs: HashMap<String, Vec<&str>> = input
         .lines()
         .map(|line| line.split_once(" -> ").unwrap())
         .map(|(inp, name)| (name.to_string(), inp.split(" ").collect::<Vec<&str>>()))
-        .collect::<HashMap<_, _>>();
+        .collect();
 
     // part 1
     let part_1_val = get_a_signal(&inputs, HashMap::new());
@@ -16,8 +16,7 @@ fn main() {
     // part 2
     let mut vals2 = HashMap::new();
     vals2.insert("b".to_string(), part_1_val);
-    let part_2_val = get_a_signal(&inputs, vals2);
-    println!("Part 2: {}", part_2_val);
+    println!("Part 2: {}", get_a_signal(&inputs, vals2));
 }
 
 fn get_val(name_or_val: &str, values: &HashMap<String, u16>) -> Option<u16> {
@@ -55,15 +54,13 @@ fn get_a_signal(inputs: &HashMap<String, Vec<&str>>, mut values: HashMap<String,
                     }
                 }
                 [a, "RSHIFT", b] => {
-                    let shift_amount = b.parse::<i32>().unwrap();
-                    if let Some(val) = get_val(a, &values) {
-                        values.insert(name.clone(), val >> shift_amount);
+                    if let (Some(val), Some(shift)) = (get_val(a, &values), b.parse::<i32>().ok()) {
+                        values.insert(name.clone(), val >> shift);
                     }
                 }
                 [a, "LSHIFT", b] => {
-                    let shift_amount = b.parse::<i32>().unwrap();
-                    if let Some(val) = get_val(a, &values) {
-                        values.insert(name.clone(), val << shift_amount);
+                    if let (Some(val), Some(shift)) = (get_val(a, &values), b.parse::<i32>().ok()) {
+                        values.insert(name.clone(), val << shift);
                     }
                 }
 
