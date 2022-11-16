@@ -1,37 +1,64 @@
-use serde_json::Value::{self, *};
-use std::fs;
+use itertools::Itertools;
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
+
 fn main() {
-    let input = fs::read_to_string("input.json").unwrap();
-    let re = regex::Regex::new(r"([-]?\d+)").unwrap();
-    let v: i32 = re
-        .captures_iter(&input)
-        .map(|cap| cap.get(1).unwrap().as_str().parse::<i32>().unwrap())
-        .sum();
-    println!("part 1: {:?}", v);
-
-    let input_json: Value = serde_json::from_str(&input).unwrap();
-    println!("part 2: {:?}", get_sum(&input_json));
-}
-
-fn get_sum(node: &Value) -> i64 {
-    match node {
-        Number(num) => num.as_i64().unwrap(),
-        Array(vec) => vec.iter().map(|v| get_sum(v)).sum(),
-
-        // if any object value is "red" the whole object is and children val is 0
-        Object(obj) => {
-            if obj.values().any(|v| {
-                if let String(str_val) = v {
-                    str_val == "red"
-                } else {
-                    false
-                }
-            }) {
-                0
-            } else {
-                obj.values().map(|v| get_sum(v)).sum()
-            }
+    // parse data
+    let input = fs::read_to_string("input.txt").unwrap();
+    let mut rankings = HashMap::new();
+    let mut guests = HashSet::new();
+    for line in input.lines() {
+        let tokens = line
+            .strip_suffix('.')
+            .unwrap()
+            .split(' ')
+            .collect::<Vec<_>>();
+        if let &[person, _, direction, val, .., neighbor] = &tokens[..] {
+            guests.insert(person);
+            rankings.insert(
+                (person, neighbor),
+                val.parse::<i32>().unwrap() * (if direction == "lose" { -1 } else { 1 }),
+            );
         }
-        _ => 0,
     }
+
+    // part 1
+    let mut max_happiness = 0;
+    for mut perm in guests.iter().permutations(8) {
+        perm.push(perm.get(0).unwrap());
+        let happiness = perm
+            .iter()
+            .zip(perm.iter().skip(1))
+            .map(|(&&person, &&guest)| {
+                rankings.get(&(person, guest)).unwrap() + rankings.get(&(guest, person)).unwrap()
+            })
+            .sum();
+
+        max_happiness = max_happiness.max(happiness);
+    }
+    println!("part 1: {}", max_happiness);
+
+    // part 2
+    let mut max_happiness = 0;
+    for mut perm in guests.iter().permutations(8) {
+        perm.push(perm.get(0).unwrap());
+        for i in 0..8 {
+            let happiness = perm
+                .iter()
+                .zip(perm.iter().skip(1))
+                .enumerate()
+                .map(|(j, (&&person, &&guest))| {
+                    if i == j {
+                        return 0;
+                    }
+                    rankings.get(&(person, guest)).unwrap()
+                        + rankings.get(&(guest, person)).unwrap()
+                })
+                .sum();
+            max_happiness = max_happiness.max(happiness);
+        }
+    }
+    println!("part 2: {}", max_happiness);
 }
